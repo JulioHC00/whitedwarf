@@ -53,19 +53,19 @@ def opacity(rho, T):
 
 def envelope_equations(x, variables):
   q, M, t = variables
-  kappa = opacity((q+q_o)*rho_r, T_r*(t+t_o))
+  kappa = opacity((q+q_o)*rho_r, T_r*(t+t_o))  
   Cq = 4*sc.G*R_r**2*sc.m_p*sc.pi*rho_r/(3*T_r*sc.k)
   Ct = 3*L_r*kappa*l*rho_r/(64*R_r*T_r**4*sc.pi*sc.sigma)
 
   derivatives = [-Cq*(M + M_o)*(q + q_o)/((t + t_o)*(x + x_o)**2),
-                 3*q*x**2,
-                 (q + q_o)/((t + t_o)**3*(x + x_o)**2)]
+                 3*(q+q_o)*x**2,
+                 -Ct*(q + q_o)/((t + t_o)**3*(x + x_o)**2)]
   return derivatives
 
 L_r = luminosity(m_o, T_o)
 l = 1
 
-env = solve_ivp(envelope_equations, [0,x_max], [0,0,0], method = 'RK45')
+env = solve_ivp(envelope_equations, [0,x_max], [0,0,0], method = 'LSODA')
 
 class envelope:
   mass = m_o + env.y[1]*(4/3)*sc.pi*R_r**3*rho_r
@@ -95,7 +95,7 @@ class reduced_del_envelope:
   radius = env.t
   radius = radius[0:len(mass)]
   
-fig, ax = plt.subplots(3,2, dpi = 150, figsize=(45,15))
+fig, ax = plt.subplots(3,2, dpi = 150, figsize=(15,25))
 
 ax[0,0].plot(del_envelope.radius, del_envelope.density, color = 'orange')
 ax[0,0].set_xlabel('Envelope radius (R-R_core) [m]')
@@ -115,20 +115,20 @@ ax[1,0].set_ylabel('Envelope change in temperature  (T-T_core) [K]')
 ax[1,0].set_title('Incremental temperature of the envelope')
 ax[1,0].grid()
 
-ax[1,1].plot(envelope.radius, envelope.density, color = 'orange')
-ax[1,1].set_xlabel('Total radius [m]')
+ax[1,1].plot(envelope.radius/R_sun, envelope.density, color = 'green')
+ax[1,1].set_xlabel('Total radius [R⊙]')
 ax[1,1].set_ylabel('Envelope density [kg/m^3]')
 ax[1,1].set_title('Density of the envelope')
 ax[1,1].grid()
 
-ax[2,0].plot(envelope.radius, envelope.mass, color = 'orange')
-ax[2,0].set_xlabel('Total radius [m]')
-ax[2,0].set_ylabel('Envelope mass [kg]')
-ax[2,0].set_title('Mass of the envelope')
+ax[2,0].plot(envelope.radius/R_sun, envelope.mass/M_sun, color = 'green')
+ax[2,0].set_xlabel('Total radius [R⊙]')
+ax[2,0].set_ylabel('Envelope mass [M⊙]')
+ax[2,0].set_title('Total mass')
 ax[2,0].grid()
 
-ax[2,1].plot(envelope.radius, envelope.temperature, color = 'orange')
-ax[2,1].set_xlabel('Total radius [m]')
+ax[2,1].plot(envelope.radius/R_sun, envelope.temperature, color = 'green')
+ax[2,1].set_xlabel('Total radius [R⊙]')
 ax[2,1].set_ylabel('Envelope temperature [K]')
 ax[2,1].set_title('Temperature of the envelope')
 ax[2,1].grid()
