@@ -14,7 +14,7 @@ L_sun = 3.828e26
 # Calculate core and take initial values
 x_max = -1
 
-rho_core = 1e6
+rho_core = 1.9677e9
 T_core = 1e7
 Y_e = 0.5
 gaunt = 1
@@ -40,7 +40,7 @@ x_o = R_o/R_r
 t_o = T_o/T_r
 
 if x_max == -1:
-  x_max = 1e5/R_r
+  x_max = 1e6/R_r
  
 
 def luminosity(m, T):
@@ -70,9 +70,9 @@ env = solve_ivp(envelope_equations, [0,x_max], [0,0,0], method = 'LSODA')
 class envelope:
   mass = m_o + env.y[1]*(4/3)*sc.pi*R_r**3*rho_r
   mass = mass[~np.isnan(mass)]
-  density = q_o + env.y[0]*rho_r
+  density = rho_o + env.y[0]*rho_r
   density = density[0:len(mass)]
-  temperature = t_o+env.y[2]*T_r
+  temperature = T_o+env.y[2]*T_r
   temperature = temperature[0:len(mass)]
   radius = R_o + env.t*R_r
   radius = radius[0:len(mass)]
@@ -125,6 +125,7 @@ ax[2,0].plot(envelope.radius/R_sun, envelope.mass/M_sun, color = 'green')
 ax[2,0].set_xlabel('Total radius [R⊙]')
 ax[2,0].set_ylabel('Envelope mass [M⊙]')
 ax[2,0].set_title('Total mass')
+ax[2,0].set_yticks(np.arange(0,1,0.1))
 ax[2,0].grid()
 
 ax[2,1].plot(envelope.radius/R_sun, envelope.temperature, color = 'green')
@@ -132,3 +133,8 @@ ax[2,1].set_xlabel('Total radius [R⊙]')
 ax[2,1].set_ylabel('Envelope temperature [K]')
 ax[2,1].set_title('Temperature of the envelope')
 ax[2,1].grid()
+
+print('Initial mass', m_o)
+print('Initial density', rho_o)
+print('Initial temperature', T_o)
+print('Envelope temperature', envelope.temperature)
