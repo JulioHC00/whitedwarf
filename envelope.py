@@ -29,7 +29,7 @@ R_o = cor.radius[-1]
 T_o = cor.temperature[-1]
 
 rho_r =1e4
-R_r = 1e4
+R_r = 1e4 
 P_r = P_o
 T_r = T_o
 
@@ -40,8 +40,17 @@ x_o = R_o/R_r
 t_o = T_o/T_r
 
 if x_max == -1:
-  x_max = 1e6/R_r
+  x_max = 1e9/R_r
  
+def min_density(x, variables):
+    q, M, t = variables
+    
+    if q_o+q <= 1/rho_r:
+        end = 0
+    else:
+        end = 1
+    return end
+min_density.terminal = True
 
 def luminosity(m, T):
   L = (T/(7e7))**(7/2)*(m/M_sun)*L_sun
@@ -63,9 +72,11 @@ def envelope_equations(x, variables):
   return derivatives
 
 L_r = luminosity(m_o, T_o)
-l = 1
+l=1
 
-env = solve_ivp(envelope_equations, [0,x_max], [0,0,0], method = 'LSODA')
+env = solve_ivp(envelope_equations, [0,x_max], [0,0,0], method = 'RK23', events = min_density)
+
+print('Envelope:', env.message)
 
 class envelope:
   mass = m_o + env.y[1]*(4/3)*sc.pi*R_r**3*rho_r
@@ -134,7 +145,8 @@ ax[2,1].set_ylabel('Envelope temperature [K]')
 ax[2,1].set_title('Temperature of the envelope')
 ax[2,1].grid()
 
-print('Initial mass', m_o)
-print('Initial density', rho_o)
-print('Initial temperature', T_o)
-print('Envelope temperature', envelope.temperature)
+#print(l*L_r/4.34e19)
+#print('Initial mass', m_o)
+#print('Initial density', rho_o)
+#print('Initial temperature', T_o)
+#print('Envelope temperature', del_envelope.temperature)
