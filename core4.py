@@ -93,6 +93,7 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
     R_sun = 6.9634*1e8
     M_sun = 2*1e30
     rho_e = rho*Y_e/sc.m_p
+    #P_c = ((2.*sc.pi*sc.hbar**2)/(5*sc.m_e))*(4*sc.pi/3)**(-2./3)*2**(-2./3)*(rho*Y_e/sc.m_p)**(5./3)
     P_c = (3*sc.pi**2)**(2/3)*sc.hbar**2/(5*sc.m_e)*rho_e**(5/3)
     rho_o = (sc.m_e*sc.c/sc.hbar)**(3)*sc.m_p/(3*sc.pi**2*Y_e)
     q_o = rho_o/rho_r
@@ -166,15 +167,19 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
     if messages:
         print("Core:")
         print(c_l.message)
+        
+    p_f = (core.density[-1]/(sc.m_p*P_c))*sc.k*core.temperature[-1]
     
-    pressure = solve_ivp(pressure,[reduced_core.density[0],reduced_core.density[-1]], [1], method = solver, t_eval = reduced_core.density)
+    pressure = solve_ivp(pressure,[reduced_core.density[-1],reduced_core.density[0]], [p_f], method = solver, t_eval = np.flip(reduced_core.density))
     
     if messages:
         print("Pressure:")
         print(pressure.message)
     
     core.pressure = pressure.y[0]*P_c
+    core.pressure = np.flip(core.pressure)
     reduced_core.pressure = pressure.y[0]
+    reduced_core.pressure = np.flip(reduced_core.pressure)
     
     core.pressure_sm = ((2.*sc.pi*sc.hbar**2)/(5*sc.m_e))*(4*sc.pi/3)**(-2./3)*2**(-2./3)*(core.density*Y_e/sc.m_p)**(5./3)
     reduced_core.pressure_sm = core.pressure/P_c
