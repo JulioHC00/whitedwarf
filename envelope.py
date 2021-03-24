@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp, odeint
 import scipy.constants as sc
 import core4
-import core3
+import scipy.interpolate
 
 rho_core_sun = 1.62e5
 rho_mean_sun = 1406.3134
@@ -106,10 +106,27 @@ def solve(rho_core, T_core, Y_e, op_test = -1, graphs=False, message = True, x_m
         temperature = temperature[0:len(mass)]
         radius = env.t
         radius = radius[0:len(mass)]
-        
+    
+    inter_q = scipy.interpolate.interp1d(reduced_del_envelope.radius, reduced_del_envelope.density)
+    inter_t = scipy.interpolate.interp1d(reduced_del_envelope.radius, reduced_del_envelope.temperature)
+    inter_M = scipy.interpolate.interp1d(reduced_del_envelope.radius, reduced_del_envelope.mass)
+    
+    def pressure(x, p):
+        q = inter_q(x)
+        M = inter_M(x)
+        C = 4*sc.G*R_r**2*sc.pi*rho_r**2/(3*P_r)
+        dpdx = -C*(M+M_o)*(q+q_o)/(x+x_o)**2
+        return dpdx
+    
+    pressure = solve_ivp(pressure,[reduced_del_envelope.radius[0],reduced_del_envelope.radius[-1]], [0], t_eval = reduced_del_envelope.radius, method = solver)
+    
+    envelope.pressure = P_o+pressure.y[0]*P_r
+    del_envelope.pressure = pressure.y[0]*P_r
+    reduced_del_envelope.pressure = pressure.y[0]
+    
     if graphs:
 
-        fig, ax = plt.subplots(3,2, dpi = 150, figsize=(15,25))
+        fig, ax = plt.subplots(4,2, dpi = 150, figsize=(15,25))
 
         ax[0,0].plot(del_envelope.radius, del_envelope.density, color = 'orange')
         ax[0,0].set_xlabel('Envelope radius (R-R_core) [m]')
@@ -147,5 +164,13 @@ def solve(rho_core, T_core, Y_e, op_test = -1, graphs=False, message = True, x_m
         ax[2,1].set_ylabel('Envelope temperature [K]')
         ax[2,1].set_title('Temperature of the envelope')
         ax[2,1].grid()
+        
+        ax[3,0].plot(envelope.radius/R_sun, envelope.pressure, color = 'green', label = 'dPdr')
+        ax[3,0].plot(envelope.radius/R_sun, (envelope.density/sc.m_p)*sc.k*envelope.temperature, label = 'P=rho*k*T/m_p', color='blue', linestyle='dotted')
+        ax[3,0].set_xlabel('Total radius [R⊙]')
+        ax[3,0].set_ylabel('Envelope pressure [Pa]')
+        ax[3,0].set_title('Pressure of the envelope')
+        ax[3,0].grid()
+        ax[3,0].legend()
     
     return envelope, del_envelope, reduced_del_envelope, cor, re_cor
