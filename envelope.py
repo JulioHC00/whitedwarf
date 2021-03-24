@@ -14,7 +14,7 @@ L_sun = 3.828e26
 halfsolardens = 1.9677e9
 
 def solve(rho_core, T_core, Y_e, op_test = -1, graphs=False, message = True, x_max=-1, rho_r=1e4, R_r = 1e4, P_r = -1, T_r = -1, density_cutoff = -1, l = 1, density = True, solver = 'RK23'):
-    cor, re_cor = core4.solve(rho_core, T_core, Y_e)
+    cor, re_cor = core4.solve(rho_core, T_core, Y_e, messages = message)
 
     rho_o = cor.density[-1]
     m_o = cor.mass[-1]
