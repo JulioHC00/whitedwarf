@@ -13,7 +13,7 @@ M_sun = 2*1e30
 L_sun = 3.828e26
 halfsolardens = 1.9677e9
 
-def solve(rho_core, T_core, Y_e, graphs=False, messages = True, x_max=-1, rho_r=1e4, R_r = 1e4, P_r = -1, T_r = -1, density_cutoff = -1, l = 1, density = True, solver = 'RK23'):
+def solve(rho_core, T_core, Y_e, op_test = -1, graphs=False, message = True, x_max=-1, rho_r=1e4, R_r = 1e4, P_r = -1, T_r = -1, density_cutoff = -1, l = 1, density = True, solver = 'RK23'):
     cor, re_cor = core4.solve(rho_core, T_core, Y_e)
 
     rho_o = cor.density[-1]
@@ -28,6 +28,8 @@ def solve(rho_core, T_core, Y_e, graphs=False, messages = True, x_max=-1, rho_r=
         T_r = T_o
     if x_max == -1:
         x_max = 1e9/R_r
+    if op_test == -1:
+        op_test = 1
 
     q_o = rho_o/rho_r
     M_o = m_o/((4/3)*sc.pi*R_r**3*rho_r)
@@ -53,7 +55,7 @@ def solve(rho_core, T_core, Y_e, graphs=False, messages = True, x_max=-1, rho_r=
         return L
 
     def opacity(rho, T):
-        kappa = 4.34e19*rho*T**(-7/2)
+        kappa = op_test*4.34e19*rho*T**(-7/2)
         return kappa
 
     def envelope_equations(x, variables):
@@ -74,7 +76,7 @@ def solve(rho_core, T_core, Y_e, graphs=False, messages = True, x_max=-1, rho_r=
     elif ~density:
         env = solve_ivp(envelope_equations, [0,x_max], [0,0,0], method = solver)
     
-    if messages:
+    if message:
         print('Envelope:', env.message)
 
     class envelope:
