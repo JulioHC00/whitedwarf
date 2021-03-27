@@ -10,7 +10,9 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp, odeint
 import scipy.constants as sc
 
-def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.0001, x_max = -1, density_event = False, messages = True, min_density = 1e-15, solver = "RK23", r_tol = 1e-3, a_tol = 1e-6):
+m_u = 1.6605390666e-27
+
+def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.0001, x_max = -1, density_event = False, messages = True, min_density = 1e-15, solver = "RK23", r_tol = 1e-3, a_tol = 1e-6, X=-1, Y=-1, Z=-1):
 
     '''
     
@@ -83,6 +85,11 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
     pressure_sm = Pressure of the core
         Calculated as fully degenerate electron pressure
     '''
+
+    if X != -1 and Y != -1 and Z != -1:
+        mu = 2/(1+3*X+0.5*Y)
+    else:
+        mu = -1
     
     if rho_r == -1:
         rho_r = rho
@@ -92,7 +99,6 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
     R_sun = 6.9634*1e8
     M_sun = 2*1e30
     rho_e = rho*Y_e/sc.m_p
-    #P_c = ((2.*sc.pi*sc.hbar**2)/(5*sc.m_e))*(4*sc.pi/3)**(-2./3)*2**(-2./3)*(rho*Y_e/sc.m_p)**(5./3)
     P_c = (3*sc.pi**2)**(2/3)*sc.hbar**2/(5*sc.m_e)*rho_e**(5/3)
     rho_o = (sc.m_e*sc.c/sc.hbar)**(3)*sc.m_p/(3*sc.pi**2*Y_e)
     q_o = rho_o/rho_r
@@ -168,7 +174,7 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
         print("Core:")
         print(c_l.message)
         
-    p_f = (core.density[-1]/(sc.m_p*P_c))*sc.k*core.temperature[-1]
+    p_f = (core.density[-1]/(m_u*mu*P_c))*sc.k*core.temperature[-1]
     
     pressure = solve_ivp(pressure,[reduced_core.density[-1],reduced_core.density[0]], [p_f], method = solver, t_eval = np.flip(reduced_core.density))
     
