@@ -160,7 +160,7 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
     '''
     
     #SOLVE CORE
-    cor, re_cor = core4.solve(rho_core, T_core, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core)
+    cor, re_cor = core4.solve(rho_core, T_core, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core, X = X, Y = Y, Z = Z)
 
     #STORE VALUES OF THE CORE
     rho_o = cor.density[-1]
@@ -336,7 +336,7 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
         ax[2,1].grid()
         
         ax[3,0].plot(envelope.radius/R_sun, envelope.pressure, color = 'green', label = 'dPdr')
-        ax[3,0].plot(envelope.radius/R_sun, (envelope.density/sc.m_p)*sc.k*envelope.temperature, label = 'P=rho*k*T/m_p', color='blue', linestyle='dotted')
+        ax[3,0].plot(envelope.radius/R_sun, (envelope.density/(mu*sc.m_u))*sc.k*envelope.temperature, label = 'P=rho*k*T/m_p', color='blue', linestyle='dotted')
         ax[3,0].set_xlabel('Total radius [R⊙]')
         ax[3,0].set_ylabel('Envelope pressure [Pa]')
         ax[3,0].set_title('Pressure of the envelope')
