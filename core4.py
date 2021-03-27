@@ -1,6 +1,5 @@
 '''
 USED TO SOLVE THE CORE OF A WHITE DWARF
-
 core.solve: Solves the core, for help use help(core.solve)
 '''
 
@@ -11,7 +10,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp, odeint
 import scipy.constants as sc
 
-def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.0001, x_max = -1, density_event = False, messages = True, min_density = 1e-15, solver = "RK23"):
+def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.0001, x_max = -1, density_event = False, messages = True, min_density = 1e-15, solver = "RK23", r_tol = 1e-3, a_tol = 1e-6):
 
     '''
     
@@ -103,8 +102,9 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
 
     def change_to_envelope(x,variables):
         q, M, t = variables
-        tf = (sc.hbar**2/(2*sc.m_e*sc.k)*(((3*sc.pi**2*rho_r*Y_e)/(sc.m_p))*q)**(2./3))/(T_c)
-        if t>=tf:
+        T = t*T_c
+        tf = (sc.hbar**2/(2*sc.m_e*sc.k)*(((3*sc.pi**2*rho_r*Y_e)/(sc.m_p))*q)**(2./3))
+        if T>=tf:
             envelope = 0
         else:
             envelope = 1
@@ -140,9 +140,9 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
         return dpdq
         
     if density_event:
-        c_l = solve_ivp(core,[r_o,x_max],[rho/rho_r,0,1], events = [change_to_envelope,minimum_density], method = solver)
+        c_l = solve_ivp(core,[r_o,x_max],[rho/rho_r,0,1], events = [change_to_envelope,minimum_density], method = solver, rtol = r_tol, atol = a_tol)
     else:
-        c_l = solve_ivp(core,[r_o,x_max],[rho/rho_r,0,1], events = change_to_envelope, method = solver)
+        c_l = solve_ivp(core,[r_o,x_max],[rho/rho_r,0,1], events = change_to_envelope, method = solver, rtol = r_tol, atol = a_tol)
 
     class core:
         mass = c_l.y[1]*(4./3)*sc.pi*(R_r)**3*rho_r
