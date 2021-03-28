@@ -89,7 +89,7 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
     if X != -1 and Y != -1 and Z != -1:
         mu = 2/(1+3*X+0.5*Y)
     else:
-        mu = -1
+        mu = 1
     
     if rho_r == -1:
         rho_r = rho
