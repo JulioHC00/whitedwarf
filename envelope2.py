@@ -28,7 +28,7 @@ L_sun = 3.828e26
 halfsolardens = 1.9677e9
 m_u = 1.6605390666e-27
 
-def lum(rho, T, Y_e, X, Y, Z, message = False, r_tol_core = 1e-3, a_tol_core = 1e-6):
+def lum(rho, T, Y_e, X, Y, Z, message = False, r_tol_core = 1e-3, a_tol_core = 1e-6, core_solver = 'RK23'):
     '''
     Description
     -----------
@@ -64,6 +64,9 @@ def lum(rho, T, Y_e, X, Y, Z, message = False, r_tol_core = 1e-3, a_tol_core = 1
         Maximum absolute error for the core
         For detailed information refer to documentation of 'solve_ivp' from scipy
         Default is 1e-6
+    core_solver: string, optional
+        Which method to use for solve_ivp in the core
+        Default is 'RK23'
     
     Returns
     -------
@@ -77,7 +80,7 @@ def lum(rho, T, Y_e, X, Y, Z, message = False, r_tol_core = 1e-3, a_tol_core = 1
     '''
     
      #SOLVE CORE
-    cor, re_cor = core4.solve(rho, T, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core, X = X, Y = Y, Z = Z)
+    cor, re_cor = core4.solve(rho, T, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core, X = X, Y = Y, Z = Z, solver = core_solver)
 
     #STORE VALUES OF THE CORE
     rho_o = cor.density[-1]
@@ -86,9 +89,10 @@ def lum(rho, T, Y_e, X, Y, Z, message = False, r_tol_core = 1e-3, a_tol_core = 1
     T_o = cor.temperature[-1]
     
     #CALCULATE OPACITY, LUMINOSITY AND SURFACE TEMPERATURE
+    mu = 2/(1+3*X+0.5*Y)
     kappa_o = 4.34e23*Z*(1+X)
     L = (32/(3*8.5))*sc.sigma*(4*sc.pi*sc.G*m_o/kappa_o)*mu*m_u/(sc.k)*T_o**(6.5)/(rho_o**2)
-    surface_temp = (L/(4*sc.pi*((x_o+env.t[-1])*R_r)**2*sc.sigma))**(1/4)
+    surface_temp = (L/(4*sc.pi*R_o**2*sc.sigma))**(1/4)
     
     #STORE VALUES
     class luminosity:
