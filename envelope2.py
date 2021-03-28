@@ -194,7 +194,7 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
     Y_e_env = 1/mu_e
     
     #OPACITY PROPORCIONALITY CONSTANT AND LUMINOSITY
-    kappa_o = 4.34e27*Z*(1+X)
+    kappa_o = 4.34e23*Z*(1+X)
     L = (32/(3*8.5))*sc.sigma*(4*sc.pi*sc.G*m_o/kappa_o)*mu*m_u/(sc.k)*T_o**(6.5)/(rho_o**2)
     
     #TO CALCULATE DENSITY
