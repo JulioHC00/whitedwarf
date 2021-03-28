@@ -1,17 +1,13 @@
 '''
 SOLVES THE ENVELOPE AND CORE OF A WHITE DWARF.
-
 NEEDS THE CORE4 MODULE, FOR ASSUMPTIONS AND INSTRUCTIONS OF JUST THE CORE SEE CORE4
-
 The envelope is solved according to the following assumptions:
-
 - Kramer's opacity law
 - Radiative diffusion as the form of energy transport
 - Constant luminosity
 - Ideal gas equation of state
 - Constant gas composition
 - Fully ionised gas in the envelope
-
 See envelope.solve for more details
 '''
 
@@ -32,7 +28,75 @@ L_sun = 3.828e26
 halfsolardens = 1.9677e9
 m_u = 1.6605390666e-27
 
-def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1, rho_r=1e4, R_r = 1e4, P_r = -1, T_r = -1, density = True, density_cutoff = -1, solver = 'RK23', r_tol_core = 1e-3, a_tol_core = 1e-6, r_tol_envelope = 1e-3, a_tol_envelope = 1e-6):
+def lum(rho, T, Y_e, X, Y, Z, message = False, r_tol_core = 1e-3, a_tol_core = 1e-6):
+    '''
+    Description
+    -----------
+    
+    USED IF ONLY THE LUMINOSITY AND SURFACE TEMPERATURE ARE NEEDED
+    FASTER THAN SOLVING THE ENVELOPE BUT NOT AS ACCURATE
+    RADIUS TAKEN TO BE CORE RADIUS NOT INCLUDING THE ENVELOPE
+    
+    Parameters
+    ----------
+    
+    rho: float
+        Density at r=0 for the core in kg/m^2
+    T: float
+        Temperature of the isothermal core
+    Y_e: float
+        Free electrons per nucleon FOR THE CORE
+    X: float
+        Hydrogen mass fraction FOR THE ENVELOPE
+    Y: float
+        Helium mass fraction FOR THE ENVELOPE
+    Z: float
+        Metals mass fraction FOR THE ENVELOPE
+    message: boolean, optional
+        Whether to print messages about the procces status
+        Set to false if the function is going to be used in a loop
+        Default is True
+    r_tol_core: float, optional
+        Maximum relative error for the core
+        For detailed information refer to documentation of 'solve_ivp' from scipy
+        Default is 1e-3
+    a_tol_core: float, optional
+        Maximum absolute error for the core
+        For detailed information refer to documentation of 'solve_ivp' from scipy
+        Default is 1e-6
+    
+    Returns
+    -------
+    
+    luminosity: class
+        Containing the following information
+        
+        luminosity.value | Value of the luminosity in W
+        luminosity.temperature | Surface temperature in K calculated with the radius of the core
+    
+    '''
+    
+     #SOLVE CORE
+    cor, re_cor = core4.solve(rho, T, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core, X = X, Y = Y, Z = Z)
+
+    #STORE VALUES OF THE CORE
+    rho_o = cor.density[-1]
+    m_o = cor.mass[-1]
+    R_o = cor.radius[-1]
+    T_o = cor.temperature[-1]
+    
+    #CALCULATE OPACITY, LUMINOSITY AND SURFACE TEMPERATURE
+    kappa_o = 4.34e23*Z*(1+X)
+    L = (32/(3*8.5))*sc.sigma*(4*sc.pi*sc.G*m_o/kappa_o)*mu*m_u/(sc.k)*T_o**(6.5)/(rho_o**2)
+    surface_temp = (L/(4*sc.pi*((x_o+env.t[-1])*R_r)**2*sc.sigma))**(1/4)
+    
+    #STORE VALUES
+    class luminosity:
+        value = L
+        temperature = surface_temp
+    return luminosity
+
+def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1, rho_r=1e4, R_r = 1e4, P_r = -1, T_r = -1, density = True, density_cutoff = -1, solver = 'RK23', core_solver = 'RK23', r_tol_core = 1e-3, a_tol_core = 1e-6, r_tol_envelope = 1e-3, a_tol_envelope = 1e-6, full_return = False):
     
     '''
     Description
@@ -106,7 +170,10 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
         If density = True, at which minimum density to stop integration
         Default is equal to 1/rho_r**3
     solver: string, optional
-        Which method to use for solve_ivp
+        Which method to use for solve_ivp in the envelope
+        Default is 'RK23'
+    core_solver: string, optional
+        Which method to use for solve_ivp in the core
         Default is 'RK23'
     r_tol_core: float, optional
         Maximum relative error for the core
@@ -120,6 +187,10 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
         Same as r_tol_core but for the envelope
     a_tol_envelope: float, optional
         Same as a_tol_core but for the envelope
+    full_return: boolean, optional
+        If True the function returns envelope, del_envelope, reduced_del_envelope, cor, re_cor
+        If False the function only return envelope, cor
+        Default is False
     
     Returns
     -------
@@ -156,11 +227,10 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
         
     re_cor: class
         Same as the cor class but the values are reduced according to the procedure of core4
-
     '''
     
     #SOLVE CORE
-    cor, re_cor = core4.solve(rho_core, T_core, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core, X = X, Y = Y, Z = Z)
+    cor, re_cor = core4.solve(rho_core, T_core, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core, X = X, Y = Y, Z = Z, solver = core_solver)
 
     #STORE VALUES OF THE CORE
     rho_o = cor.density[-1]
@@ -206,7 +276,7 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
     
     #TO CALCULATE OPACITY
     def opacity(q, t):
-        kappa = 4.34e27*Z*(1+X)*rho_r*(q+q_o)*(T_r*(t+t_o))**(-3.5)
+        kappa = kappa_o*rho_r*(q+q_o)*(T_r*(t+t_o))**(-3.5)
         return kappa
     
     #EVENT TO STOP AT MINIMUM DENSITY
@@ -265,7 +335,7 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
     class reduced_del_envelope:
         mass = env.y[0]
         mass = mass[~np.isnan(mass)]
-        density = density_calc(env.y[0], env.y[1])
+        density = density_calc(env.y[0], env.y[1])/rho_r
         density = density[0:len(mass)]
         temperature = env.y[1]
         temperature = temperature[0:len(mass)]
@@ -288,7 +358,6 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
     
     #SOLVE AND STORE PRESSURE
     pressure = solve_ivp(pressure,[reduced_del_envelope.radius[0],reduced_del_envelope.radius[-1]], [0], t_eval = reduced_del_envelope.radius, method = solver)
-    
     envelope.pressure = P_o+pressure.y[0]*P_r
     del_envelope.pressure = pressure.y[0]*P_r
     reduced_del_envelope.pressure = pressure.y[0]
@@ -343,4 +412,7 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
         ax[3,0].grid()
         ax[3,0].legend()
     
-    return envelope, del_envelope, reduced_del_envelope, cor, re_cor
+    if full_return:
+        return envelope, del_envelope, reduced_del_envelope, cor, re_cor
+    elif ~full_return:
+        return envelope, cor
