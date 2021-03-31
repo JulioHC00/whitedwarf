@@ -1,4 +1,4 @@
-import core4
+import core
 import envelope
 import numpy as np
 import matplotlib.pyplot as plt
