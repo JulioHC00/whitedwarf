@@ -1,6 +1,6 @@
 '''
 SOLVES THE ENVELOPE AND CORE OF A WHITE DWARF.
-NEEDS THE CORE MODULE, FOR ASSUMPTIONS AND INSTRUCTIONS OF JUST THE CORE SEE core
+NEEDS THE core MODULE, FOR ASSUMPTIONS AND INSTRUCTIONS OF JUST THE CORE SEE core
 The envelope is solved according to the following assumptions:
 - Kramer's opacity law
 - Radiative diffusion as the form of energy transport
@@ -100,7 +100,7 @@ def lum(rho, T, Y_e, X, Y, Z, message = False, r_tol_core = 1e-3, a_tol_core = 1
         temperature = surface_temp
     return luminosity
 
-def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1, rho_r=1e4, R_r = 1e4, P_r = -1, T_r = -1, density = True, density_cutoff = -1, solver = 'RK23', core_solver = 'RK23', r_tol_core = 1e-3, a_tol_core = 1e-6, r_tol_envelope = 1e-3, a_tol_envelope = 1e-6, full_return = False):
+def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = False, x_max=-1, rho_r=1e4, R_r = 1e4, P_r = -1, T_r = -1, density = True, density_cutoff = -1, solver = 'RK23', core_solver = 'RK23', r_tol_core = 1e-3, a_tol_core = 1e-6, r_tol_envelope = 1e-3, a_tol_envelope = 1e-6, full_return = False):
     
     '''
     Description
@@ -313,7 +313,8 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
         env = solve_ivp(envelope_equations, [0,x_max], [0,0], method = solver, rtol = r_tol_envelope, atol = a_tol_envelope)
     
     if message:
-        print('Envelope:', env.message)
+        print('Envelope:')
+        print(env.message)
 
     #STORE DATA
     class envelope:
