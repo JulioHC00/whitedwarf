@@ -1,3 +1,4 @@
+
 '''
 USED TO SOLVE THE CORE OF A WHITE DWARF
 core.solve: Solves the core, for help use help(core.solve)
@@ -12,7 +13,7 @@ import scipy.constants as sc
 
 m_u = 1.6605390666e-27
 
-def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.0001, x_max = -1, density_event = False, messages = True, min_density = 1e-15, solver = "RK23", r_tol = 1e-3, a_tol = 1e-6, X=-1, Y=-1, Z=-1):
+def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.0001, x_max = -1, density_event = False, messages = False, min_density = 1e-15, solver = "RK23", r_tol = 1e-3, a_tol = 1e-6, X=-1, Y=-1, Z=-1):
 
     '''
     
@@ -205,9 +206,9 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
         ax[0,1].grid()
         
         ax[1,0].plot(core.radius/R_sun,core.pressure, label = 'dP/drho method')
-        ax[1,0].plot(core.radius/R_sun,((2.*sc.pi*sc.hbar**2)/(5*sc.m_e))*(4*sc.pi/3)**(-2./3)*2**(-2./3)*(core.density*Y_e/sc.m_p)**(5./3), label = 'Stat. Mec. Notes', linestyle = 'dotted', color ='orange')
+        #ax[1,0].plot(core.radius/R_sun,((2.*sc.pi*sc.hbar**2)/(5*sc.m_e))*(4*sc.pi/3)**(-2./3)*2**(-2./3)*(core.density*Y_e/sc.m_p)**(5./3), label = 'Stat. Mec. Notes', linestyle = 'dotted', color ='orange')
         ax[1,0].set_xlabel('Core radius (R⊙)')
-        ax[1,0].hlines((core.density[-1]/(sc.m_p))*sc.k*core.temperature[-1], core.radius[0]/R_sun, core.radius[-1]/R_sun, color = 'green', linestyle = '-.', label = 'PV=NkT')
+        ax[1,0].hlines((core.density[-1]/(m_u*mu))*sc.k*core.temperature[-1], core.radius[0]/R_sun, core.radius[-1]/R_sun, color = 'green', linestyle = '-.', label = 'PV=NkT')
         ax[1,0].set_ylabel('Core pressure, logarithmic (Pa)')
         ax[1,0].set_title(' Core pressure (Pa)')
         ax[1,0].grid()
