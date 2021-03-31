@@ -1,6 +1,6 @@
 '''
 SOLVES THE ENVELOPE AND CORE OF A WHITE DWARF.
-NEEDS THE CORE4 MODULE, FOR ASSUMPTIONS AND INSTRUCTIONS OF JUST THE CORE SEE CORE4
+NEEDS THE CORE MODULE, FOR ASSUMPTIONS AND INSTRUCTIONS OF JUST THE CORE SEE core
 The envelope is solved according to the following assumptions:
 - Kramer's opacity law
 - Radiative diffusion as the form of energy transport
@@ -17,7 +17,7 @@ import scipy
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp, odeint
 import scipy.constants as sc
-import core4
+import core
 import scipy.interpolate
 
 rho_core_sun = 1.62e5
@@ -80,7 +80,7 @@ def lum(rho, T, Y_e, X, Y, Z, message = False, r_tol_core = 1e-3, a_tol_core = 1
     '''
     
      #SOLVE CORE
-    cor, re_cor = core4.solve(rho, T, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core, X = X, Y = Y, Z = Z, solver = core_solver)
+    cor, re_cor = core.solve(rho, T, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core, X = X, Y = Y, Z = Z, solver = core_solver)
 
     #STORE VALUES OF THE CORE
     rho_o = cor.density[-1]
@@ -230,11 +230,11 @@ def solve(rho_core, T_core, Y_e, X, Y, Z, graphs=False, message = True, x_max=-1
         core.radius      | Radius in m, array
         
     re_cor: class
-        Same as the cor class but the values are reduced according to the procedure of core4
+        Same as the cor class but the values are reduced according to the procedure of core
     '''
     
     #SOLVE CORE
-    cor, re_cor = core4.solve(rho_core, T_core, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core, X = X, Y = Y, Z = Z, solver = core_solver)
+    cor, re_cor = core.solve(rho_core, T_core, Y_e, messages = message, r_tol = r_tol_core, a_tol = a_tol_core, X = X, Y = Y, Z = Z, solver = core_solver)
 
     #STORE VALUES OF THE CORE
     rho_o = cor.density[-1]
