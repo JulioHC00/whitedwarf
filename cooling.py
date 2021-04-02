@@ -1,3 +1,7 @@
+'''
+CALCULATES THE COOLNG TRACK OF A WHITE DWARF
+'''
+
 import core
 import envelope
 import numpy as np
