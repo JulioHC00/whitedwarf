@@ -2,6 +2,8 @@
 
 This is a simple python model to calculate both the structure and cooling of white dwarfs.
 
+Written as third year undergraduate project in Physics
+
 ## Description
 
 The project is composed of three modules: core, envelope and cooling.
