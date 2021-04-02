@@ -475,8 +475,7 @@ def solve(
 
         ax[3, 0].plot(envelope.radius / R_sun, envelope.pressure,
                       color='green', label='dPdr')
-        ax[3,
-           0].plot(envelope.radius / R_sun,
+        ax[3,0].plot(envelope.radius / R_sun,
                    (envelope.density / (mu * sc.m_u)) * sc.k * envelope.temperature,
                    label='P=rho*k*T/m_p',
                    color='blue',
