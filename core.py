@@ -47,7 +47,7 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
     rho_r: float, optional
         density in kg/m^3 used to reduce the density variable for integration.
         Default is equal to rho.
-    graph: boolean, optional
+    graphs: boolean, optional
         whether to print graphs or not. False by default.
     R_r: float, optional
         radius in m used to reduce the radius variable for integration.
