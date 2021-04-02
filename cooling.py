@@ -14,7 +14,7 @@ halfsolardens = 1.9677e9
 m_u = 1.6605390666e-27
 million_years = 1e6*365*24*3600
 
-def calculate(M, T_o, R, Y_e_core, mu_core, X, Y, Z, solver = 'RK23', r_tol = 1e-3, a_tol = 1e-6, graphs = False, t_max = 100, alpha = 0, storing_times = None):
+def calculate(M, T_o, R, Y_e_core, mu_core, X, Y, Z, solver = 'RK23', r_tol = 1e-3, a_tol = 1e-6, graphs = False, t_max = 100, alpha = 0, beta =0, storing_times = None):
     kappa_o = 4.34e23*Z*(1+X)
     mu_envelope = 2/(1+3*X+0.5*Y)
     mu_e_core = 1/Y_e_core
@@ -32,7 +32,7 @@ def calculate(M, T_o, R, Y_e_core, mu_core, X, Y, Z, solver = 'RK23', r_tol = 1e
             rho_c = 6e-6*mu_e_core*T**(3/2)
             L = (32/(3*8.5))*sc.sigma*(4*sc.pi*sc.G*M/kappa_o)*mu_envelope*m_u/(sc.k)*T**(6.5)/(rho_c**2)
 
-            dTdt = -1000*million_years*(L+alpha*T)*mu_ion_core*m_u/(Cv*M)
+            dTdt = -1000*million_years*(L+alpha*T**beta)*mu_ion_core*m_u/(Cv*M)
             return dTdt
         
     
@@ -64,13 +64,13 @@ def calculate(M, T_o, R, Y_e_core, mu_core, X, Y, Z, solver = 'RK23', r_tol = 1e
     
     return evolution
 
-def full_calculate(rho_core, T_core,Y_e_core, C, X, Y, Z, solver = 'RK23', r_tol = 1e-3, a_tol = 1e-6, graphs = False, t_max = 100, full_output = False, storing_times = None):
+def full_calculate(rho_core, T_core,Y_e_core, C, X, Y, Z, solver = 'RK23', r_tol = 1e-3, a_tol = 1e-6, graphs = False, t_max = 100, full_output = False, storing_times = None, alpha = 0, beta = 0):
     
     mu_core = ((1/48)*C+9/16)**(-1)
 
     env, cor = envelope.solve(rho_core,T_core, Y_e_core, X, Y, Z, solver = solver, r_tol_core = r_tol, r_tol_envelope = r_tol, a_tol_core = a_tol, a_tol_envelope = a_tol, message = False)
     
-    evolution = calculate(cor.mass[-1], cor.temperature[-1], env.radius[-1], Y_e_core, mu_core, X, Y, Z, graphs = graphs, solver = solver, t_max = t_max, storing_times = storing_times, r_tol = r_tol, a_tol = a_tol)
+    evolution = calculate(cor.mass[-1], cor.temperature[-1], env.radius[-1], Y_e_core, mu_core, X, Y, Z, graphs = graphs, solver = solver, t_max = t_max, storing_times = storing_times, r_tol = r_tol, a_tol = a_tol, alpha=alpha, beta = beta)
     
     if full_output:
         return evolution, env, cor
