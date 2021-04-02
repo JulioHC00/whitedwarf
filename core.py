@@ -1,7 +1,6 @@
 
 '''
 USED TO SOLVE THE CORE OF A WHITE DWARF
-core.solve: Solves the core, for help use help(core.solve)
 '''
 
 
@@ -75,16 +74,19 @@ def solve(rho, T_c, Y_e, rho_r = -1, graphs = False, R_r = 6.9634e8, r_o = 0.000
     Returns
     -------
     
-    core, reduced_core corresponding to SI units and reduced (dimensionless) variables.
-    The following fields are define for each
+    core, reduced_core
     
-    mass = Mass of the core 
-    density = Density of the core
-    temperature = Temperature of the core
-    pressure = Pressure of the core
-        Calculated with differential equation
-    pressure_sm = Pressure of the core
-        Calculated as fully degenerate electron pressure
+     core: class
+        Contains values for the core in increasing radius according to
+        
+        core.mass        | Mass in kg, array
+        core.density     | Density in kg/m^3, array
+        core.temperature | Temperature in K, array
+        core.pressure    | Pressure in Pa, array
+        core.radius      | Radius in m, array
+        
+    reduced_core: class
+        Same as core but values are reduced
     '''
 
     if X != -1 and Y != -1 and Z != -1:
