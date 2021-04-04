@@ -54,7 +54,7 @@ def calculate(
         def equations(t, T):
 
             for i, rho in enumerate(np.flip(cor.density)):
-                gamma = (1 / (4 * sc.pi * sc.epsilon_0)) * (((6 * C + 8 * (1 - C)) * sc.e)
+                gamma = (1 / (4 * sc.pi * sc.epsilon_0)) * (( mu_ion_core / 2 * sc.e)
                                                             ** 2 / (sc.k * T)) * (4 * sc.pi * rho / (3 * mu_ion_core * m_u))**(1 / 3)
 
                 if gamma >= 171 and crys:
@@ -73,7 +73,7 @@ def calculate(
     else:
         def equations(t, T):
             for i, rho in enumerate(np.flip(cor.density)):
-                gamma = (1 / (4 * sc.pi * sc.epsilon_0)) * (((6 * C + 8 * (1 - C)) * sc.e)
+                gamma = (1 / (4 * sc.pi * sc.epsilon_0)) * (( mu_ion_core / 2 * sc.e)
                                                             ** 2 / (sc.k * T)) * (4 * sc.pi * rho / (3 * mu_ion_core * m_u))**(1 / 3)
 
                 if gamma >= 171 and crys:
