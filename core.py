@@ -3,14 +3,18 @@
 USED TO SOLVE THE CORE OF A WHITE DWARF
 '''
 
-
+#IMPORT MODULES
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
-from scipy.integrate import solve_ivp, odeint
+from scipy.integrate import solve_ivp
 import scipy.constants as sc
 
 m_u = 1.6605390666e-27
+rho_core_sun = 1.62e5
+rho_mean_sun = 1406.3134
+R_sun = 6.9634 * 1e8
+M_sun = 2 * 1e30
 
 
 def solve(
@@ -105,27 +109,28 @@ def solve(
     reduced_core: class
         Same as core but values are reduced
     '''
+    #COMPOSITION OF THE ENVELOPE
 
     if X != -1 and Y != -1 and Z != -1:
-        mu = 2 / (1 + 3 * X + 0.5 * Y)
+        mu = ((5 * X - Z + 3)/4)**(-1)
     else:
         mu = 1
 
+    #DEFAULT VALUE FOR REDUCING THE DENSITY
     if rho_r == -1:
         rho_r = rho
 
-    rho_core_sun = 1.62e5
-    rho_mean_sun = 1406.3134
-    R_sun = 6.9634 * 1e8
-    M_sun = 2 * 1e30
+    #DEFINE SEVERAL QUANTITIES
     rho_e = rho * Y_e / sc.m_p
     P_c = (3 * sc.pi**2)**(2 / 3) * sc.hbar**2 / (5 * sc.m_e) * rho_e**(5 / 3)
     rho_o = (sc.m_e * sc.c / sc.hbar)**(3) * sc.m_p / (3 * sc.pi**2 * Y_e)
     q_o = rho_o / rho_r
 
+    #DEFAULT MAXIMUM X FOR INTEGRATION
     if x_max == -1:
         x_max = 3e10 / R_r
 
+    #DEFINE EVENT TO CHANGE TO ENVELOPE
     def change_to_envelope(x, variables):
         q, M, t = variables
         T = t * T_c
@@ -138,6 +143,7 @@ def solve(
         return envelope
     change_to_envelope.terminal = True
 
+    #EVENT TO STOP AT THE DEFINED DENSITY IF DENSITY=TRUE
     def minimum_density(x, variables):
         q, M, t = variables
         if q <= min_density:
@@ -149,41 +155,42 @@ def solve(
         return terminate
     minimum_density.terminal = True
 
-    def gamma(q):
+    #DEFINE EQUATIONS
+    def phi(q):
         y = q / q_o
-        gam = y**(2 / 3) / (3 * (1 + y**(2 / 3))**(1 / 2))
+        gam = y**(2 / 3) / ( (1 + y**(2 / 3))**(1 / 2))
         return gam
 
     def core(x, variables):
         q, M, t = variables
         C = 4 * sc.G * R_r**2 * sc.m_p * sc.pi * \
-            rho_r / (3 * Y_e * sc.c**2 * sc.m_e)
-        derivatives = [-C * M * q / (gamma(q) * x**2),
+            rho_r / ( Y_e * sc.c**2 * sc.m_e)
+        derivatives = [-C * M * q / (phi(q) * x**2),
                        3 * q * x**2,
                        0]
         return derivatives
 
     def pressure(q, P):
-        dpdq = Y_e * sc.c**2 * gamma(q) * sc.m_e * rho_r / (P_c * sc.m_p)
+        dpdq = Y_e * sc.c**2 * phi(q) * sc.m_e * rho_r / (P_c * 3 * sc.m_p)
         return dpdq
 
+    #SOLVE EQUATIONS
     if density_event:
         c_l = solve_ivp(core,
-                        [r_o,
-                         x_max],
-                        [rho / rho_r,
-                         0,
-                         1],
-                        events=[change_to_envelope,
-                                minimum_density],
+                        [r_o, x_max],
+                        [rho / rho_r, 0, 1],
+                        events=[change_to_envelope, minimum_density],
                         method=solver,
                         rtol=r_tol,
                         atol=a_tol)
     else:
-        c_l = solve_ivp(
-            core, [
-                r_o, x_max], [
-                rho / rho_r, 0, 1], events=change_to_envelope, method=solver, rtol=r_tol, atol=a_tol)
+        c_l = solve_ivp(core,
+                [r_o, x_max],
+                [rho / rho_r, 0, 1],
+                events=change_to_envelope,
+                method=solver,
+                rtol=r_tol,
+                atol=a_tol)
 
     class core:
         mass = c_l.y[1] * (4. / 3) * sc.pi * (R_r)**3 * rho_r
@@ -191,7 +198,7 @@ def solve(
         radius = c_l.t * R_r
         radius = radius[0:len(mass)]
         density = c_l.y[0] * rho_r
-        density = density[~np.isnan(density)]
+        density = density[0:len(mass)]
         temperature = c_l.y[2] * T_c
         temperature = temperature[0:len(mass)]
 
@@ -227,10 +234,6 @@ def solve(
     core.pressure = np.flip(core.pressure)
     reduced_core.pressure = pressure.y[0]
     reduced_core.pressure = np.flip(reduced_core.pressure)
-
-    core.pressure_sm = ((2. * sc.pi * sc.hbar**2) / (5 * sc.m_e)) * (4 * sc.pi /
-                                                                     3)**(-2. / 3) * 2**(-2. / 3) * (core.density * Y_e / sc.m_p)**(5. / 3)
-    reduced_core.pressure_sm = core.pressure / P_c
 
     if graphs:
         fig, ax = plt.subplots(2, 2, figsize=(13, 10), dpi=100)

@@ -301,8 +301,8 @@ def solve(
     # CALCULATE THE MEAN ION WEIGHT IN UNITS OF HYDROGEN MASS, NUCLEONS PER
     # FREE ELECTRON AND FREE ELECTRONS PER NUCLEON FOR THE ENVELOPE
     mu = 2 / (1 + 3 * X + 0.5 * Y)
-    mu_e = X + 2 * Y + 2 * Z
-    Y_e_env = 1 / mu_e
+    mu_e = ((1 / 2) * (1 + X))**(-1)
+    Y_e_env = (1 / 2) * (1 + X)
 
     # OPACITY PROPORCIONALITY CONSTANT AND LUMINOSITY
     kappa_o = 4.34e23 * Z * (1 + X)
@@ -312,14 +312,13 @@ def solve(
     # TO CALCULATE DENSITY
     def density_calc(M, t):
         m = 4 / 3 * sc.pi * R_r**3 * rho_r * M
-        rho_total = ((2 / 8.5) * (16 * sc.sigma / 3) * (4 * sc.pi * sc.G * (m + m_o) /
+        rho = ((2 / 8.5) * (16 * sc.sigma / 3) * (4 * sc.pi * sc.G * (m + m_o) /
                                                         (kappa_o * L)) * (mu * m_u / sc.k))**(1 / 2) * ((t + t_o) * T_r)**(3.25)
-        rho = rho_total - rho_o
         return rho
 
     # TO CALCULATE OPACITY
     def opacity(q, t):
-        kappa = kappa_o * rho_r * (q + q_o) * (T_r * (t + t_o))**(-3.5)
+        kappa = kappa_o * rho_r * q * (T_r * (t + t_o))**(-3.5)
         return kappa
 
     # EVENT TO STOP AT MINIMUM DENSITY
@@ -328,7 +327,7 @@ def solve(
 
         q = density_calc(M, t) / rho_r
 
-        if q_o + q <= density_cutoff:
+        if q <= density_cutoff:
             end = 0
         else:
             end = 1
@@ -341,21 +340,27 @@ def solve(
         q = density_calc(M, t) / rho_r
         kappa = opacity(q, t)
         Ct = 3 * kappa * L * rho_r / (64 * R_r * T_r**4 * sc.pi * sc.sigma)
-        derivatives = [3 * (q + q_o) * (x + x_o)**2,
-                       -Ct * (q + q_o) / ((t + t_o)**3 * (x + x_o)**2)]
+        derivatives = [3 * q * (x + x_o)**2,
+                       -Ct * q / ((t + t_o)**3 * (x + x_o)**2)]
         return derivatives
 
     # SOLVE THE ENVELOPE
     if density:
-        env = solve_ivp(
-            envelope_equations, [
-                0, x_max], [
-                0, 0], method=solver, events=min_density, rtol=r_tol_envelope, atol=a_tol_envelope)
+        env = solve_ivp(envelope_equations,
+            [0, x_max],
+            [0, 0],
+            method=solver,
+            events=min_density,
+            rtol=r_tol_envelope,
+            atol=a_tol_envelope)
     elif ~density:
         env = solve_ivp(
-            envelope_equations, [
-                0, x_max], [
-                0, 0], method=solver, rtol=r_tol_envelope, atol=a_tol_envelope)
+            envelope_equations,
+            [0, x_max],
+            [0, 0],
+            method=solver,
+            rtol=r_tol_envelope,
+            atol=a_tol_envelope)
 
     if message:
         print('Envelope:')
@@ -365,7 +370,7 @@ def solve(
     class envelope:
         mass = m_o + env.y[0] * (4 / 3) * sc.pi * R_r**3 * rho_r
         mass = mass[~np.isnan(mass)]
-        density = rho_o + density_calc(env.y[0], env.y[1])
+        density = density_calc(env.y[0], env.y[1])
         density = density[0:len(mass)]
         temperature = T_o + env.y[1] * T_r
         temperature = temperature[0:len(mass)]
@@ -378,7 +383,7 @@ def solve(
     class del_envelope:
         mass = env.y[0] * (4 / 3) * sc.pi * R_r**3 * rho_r
         mass = mass[~np.isnan(mass)]
-        density = density_calc(env.y[0], env.y[1])
+        density = density_calc(env.y[0], env.y[1]) - rho_o
         density = density[0:len(mass)]
         temperature = env.y[1] * T_r
         temperature = temperature[0:len(mass)]
@@ -388,7 +393,7 @@ def solve(
     class reduced_del_envelope:
         mass = env.y[0]
         mass = mass[~np.isnan(mass)]
-        density = density_calc(env.y[0], env.y[1]) / rho_r
+        density = (density_calc(env.y[0], env.y[1]) - rho_o) / rho_r
         density = density[0:len(mass)]
         temperature = env.y[1]
         temperature = temperature[0:len(mass)]
@@ -410,15 +415,14 @@ def solve(
     def pressure(x, p):
         M = inter_M(x)
         t = inter_t(x)
-        q = density_calc(M, t) / rho_r
+        q = (density_calc(M, t) - rho_o) / rho_r
         C = 4 * sc.G * R_r**2 * sc.pi * rho_r**2 / (3 * P_r)
         dpdx = -C * (M + M_o) * (q + q_o) / (x + x_o)**2
         return dpdx
 
     # SOLVE AND STORE PRESSURE
     pressure = solve_ivp(pressure,
-                         [reduced_del_envelope.radius[0],
-                          reduced_del_envelope.radius[-1]],
+                         [reduced_del_envelope.radius[0], reduced_del_envelope.radius[-1]],
                          [0],
                          t_eval=reduced_del_envelope.radius,
                          method=solver)

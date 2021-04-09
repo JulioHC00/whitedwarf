@@ -44,9 +44,9 @@ def calculate(
     '''
     cor = core_class
     kappa_o = 4.34e23 * Z * (1 + X)
-    mu_envelope = 2 / (1 + 3 * X + 0.5 * Y)
+    mu_envelope = 4 / (5 * X - Z + 3)
     mu_e_core = 1 / Y_e_core
-    mu_ion_core = ((1 / mu_core) - (1 / mu_e_core))**(-1)
+    mu_ion_core = (C/48 + 1/16)**(-1)
     Cv = (3 / 2) * sc.k
     Cv_crystal = 3 * sc.k
     mass = np.flip(cor.mass)
@@ -55,16 +55,16 @@ def calculate(
 
             for i, rho in enumerate(np.flip(cor.density)):
                 gamma = (1 / (4 * sc.pi * sc.epsilon_0)) * (( mu_ion_core / 2 * sc.e)
-                                                            ** 2 / (sc.k * T)) * (4 * sc.pi * rho / (3 * mu_ion_core * m_u))**(1 / 3)
+                                                            ** 2 / (sc.k * T)) * (4 * sc.pi * rho / (3 * mu_ion_core * sc.m_p))**(1 / 3)
 
                 if gamma >= 171 and crys:
                     mass_energy = (
-                        (mass[0] - mass[i]) * Cv + (mass[i]) * Cv_crystal) / (mu_ion_core * m_u)
+                        (mass[0] - mass[i]) * Cv + (mass[i]) * Cv_crystal) / (mu_ion_core * sc.m_p)
                     break
                 elif i + 1 == len(cor.density):
                     mass_energy = M * Cv / (mu_ion_core * m_u)
 
-            rho_c = 6e-6 * mu_e_core * T**(3 / 2)
+            rho_c = sc.m_p/(3 * sc.pi**(2)) * (2 * sc.m_e * sc.k/(sc.hbar**(2)))**(3/2) * mu_e_core * T**(3 / 2)
             L = (32 / (3 * 8.5)) * sc.sigma * (4 * sc.pi * sc.G * M / \
                  kappa_o) * mu_envelope * m_u / (sc.k) * T**(6.5) / (rho_c**2)
 
@@ -83,16 +83,17 @@ def calculate(
                 elif i + 1 == len(cor.density):
                     mass_energy = M * Cv / (mu_ion_core * m_u)
 
-            rho_c = 6e-6 * mu_e_core * T**(3 / 2)
+            rho_c = sc.m_p/(3 * sc.pi**(2)) * (2 * sc.m_e * sc.k/(sc.hbar**(2)))**(3/2) * mu_e_core * T**(3 / 2)
             L = (32 / (3 * 8.5)) * sc.sigma * (4 * sc.pi * sc.G * M / \
                  kappa_o) * mu_envelope * m_u / (sc.k) * T**(6.5) / (rho_c**2)
 
             dTdt = -1000 * million_years * (L + alpha * T**beta) / mass_energy
             return dTdt
 
+    rho_constant = sc.m_p/(3 * sc.pi**(2)) * (2 * sc.m_e * sc.k/(sc.hbar**(2)))**(3/2)
+
     cool = solve_ivp(equations,
-                     [0,
-                      t_max],
+                     [0,t_max],
                      [T_o],
                      method=solver,
                      rtol=r_tol,
@@ -103,7 +104,7 @@ def calculate(
         time = cool.t * million_years * 1000
         core_temperature = cool.y[0]
         luminosity = (32 / (3 * 8.5)) * sc.sigma * (4 * sc.pi * sc.G * M / kappa_o) * \
-            mu_envelope * m_u / (sc.k) * core_temperature**(3.5) / ((6e-6 * mu_e_core)**2)
+            mu_envelope * m_u / (sc.k) * core_temperature**(3.5) / ((rho_constant * mu_e_core)**2)
         surface_temperature = (
             luminosity / (4 * sc.pi * R**2 * sc.sigma))**(1 / 4)
 
