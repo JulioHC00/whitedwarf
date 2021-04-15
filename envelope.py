@@ -285,7 +285,7 @@ def solve(
     if T_r == -1:
         T_r = T_o
     if x_max == -1:
-        x_max = 1e9 / R_r
+        x_max = 1e10 / R_r
 
     # DEFINE DENSITY AT WHICH TO STOP INTEGRATING
     if density_cutoff == -1:
@@ -333,6 +333,25 @@ def solve(
             end = 1
         return end
     min_density.terminal = True
+    
+    #TO STOP WHEN THE CORE TEMPERATURE HAS BEEN REACHED
+    
+    def surf_temp(x, variables):
+        M, t = variables
+        
+        surface = (L/(4 * sc.pi * sc.sigma * (R_o + x * R_r)**2))**(1/4)
+        
+        return surface
+    
+    def calc_temp(x, variables):
+        M, t = variables
+        
+        if T_o + t*T_r <= surf_temp(x, variables):
+            end = 0
+        else:
+            end = 1
+        return end
+    calc_temp.terminal = True
 
     # DIFERENTIAL EQUATIONS OF THE ENVELOPE
     def envelope_equations(x, variables):
@@ -350,7 +369,8 @@ def solve(
             [0, x_max],
             [0, 0],
             method=solver,
-            events=min_density,
+            events=[min_density,
+                    calc_temp],
             rtol=r_tol_envelope,
             atol=a_tol_envelope)
     elif ~density:
@@ -359,6 +379,7 @@ def solve(
             [0, x_max],
             [0, 0],
             method=solver,
+            events = calc_temp,
             rtol=r_tol_envelope,
             atol=a_tol_envelope)
 
